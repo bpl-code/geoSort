@@ -1,0 +1,28 @@
+{'type': 'house',
+ 'class': 'place',
+ 'licence': 'Data © OpenStreetMap contributors, ODbL 1.0. http://www.openstreetmap.org/copyright',
+ 'display_name': '2, Stralauer Allee, Fhain, Friedrichshain-Kreuzberg, Berlin, 10245, Deutschland',
+ 'place_id': '35120946',
+ 'osm_id': '2825035484',
+ 'lon': '13.4489063',
+ 'osm_type': 'node',
+ 'address': {'country_code': 'de',
+             'road': 'Stralauer Allee',
+             'postcode': '10245',
+             'house_number': '2',
+             'state': 'Berlin',
+             'country': 'Deutschland',
+             'suburb': 'Fhain',
+             'city_district': 'Friedrichshain-Kreuzberg'},
+ 'lat': '52.5018003',
+ 'importance': 0.421,
+ 'boundingbox': ['52.5017503', '52.5018503', '13.4488563', '13.4489563']}
+with
+
+location.raw['address']
+
+
+{'postcode': '49000', 'country': 'Vietnam', 'road': 'Quốc Tử Giám', 'bus_stop': '23,38', 'country_code': 'vn', 'city': 'Hanoi', 'suburb': 'Đống Đa'}
+
+
+worked out how to get only city and country returns and redesigned the photo class to automatically find that info and assign it to self varibles. I have added all the function names needed for finding and retrieving the date e. I've added the code for findLatitudeAndLongitude() and findcity() and findcountry().
