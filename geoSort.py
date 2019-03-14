@@ -4,16 +4,33 @@
 from GPSPhoto import gpsphoto
 import os
 from geopy.geocoders import Nominatim
+from glob import glob
+
+
+
+class session():
+    def __init__ (self, directory="./", folders=[]):
+        self.directory = directory
+        self.folders = folders
+
+    def getDirectory():
+        return self.directory
+
+    def setDirectory(newDirectory):
+        self.directory = newDirectory
+
+
+
+
 
 
 class photo():
 
-    def __init__ (self, photoFile, fileURL):
+    def __init__ (self, fileURL):
 
-        self.photoFile = photoFile
-        self.fileURL = fileURL
+        self.photoURL = fileURL
         self.latitude, self.longitude, self.coordinates = self.findLatitudeAndLongitude()
-        self.geolocator = Nominatim(user_agent="geoSort")
+        self.geolocator = Nominatim(user_agent="geoSort", timeout=3)
         self.fullLocationDetials = self.geolocator.reverse(self.getCoordinates(), addressdetails=True, language='en-GB')
         self.rawAddress = self.fullLocationDetials.raw
 
@@ -22,7 +39,7 @@ class photo():
         self.country = self.findCountry()
 
     def findLatitudeAndLongitude(self):
-        gpsData = gpsphoto.getGPSData('IMG_5386.jpg') #needs to be replaced with photoFile
+        gpsData = gpsphoto.getGPSData(self.photoURL) #needs to be replaced with photoFile
         latitude = str(gpsData["Latitude"])
         longitude = str(gpsData['Longitude'])
         coordinates = latitude + "," + longitude
@@ -38,7 +55,7 @@ class photo():
         return city
 
     def findCountry(self):
-        country = self.rawAddress['address']['city']
+        country = self.rawAddress['address']['country']
         return country
 
     def getFileURL(self):
@@ -59,7 +76,7 @@ class photo():
     def getCity(self):
         return self.city
     
-    def getCountry():
+    def getCountry(self):
         return self.country
 
 
@@ -74,47 +91,65 @@ class photo():
 
 #create a sort of locations 
 
+def createSession():
+    newSession = session()
+    return newSession
 
-def chooseDirectory():
-    directory = input("Enter Directory: ")
-    return 0
+def loadSession(loadedDirectory,loadedFolders):
+    newSession = session(directory=loadedDirectory, folders=loadedFolders)
+    return newSession
+
+def chooseDirectory(userInput, session):
+    session.setDirectory(userInput)
+    
 
 def loadConfigFile():
-    #look for a config file
-    #update locations sort list with list from config file
-    #if no config file return False and run createConfigFile()
-    
-    return 0
+    try: 
+        configFile = open(".configFile.txt", 'x')
 
-def saveConfigFile():
-    #update config file
-    return 0
+    except FileExistsError:
 
-def createConfigFile():
-    return 0
+        configFile = open(".configFile.txt", "w+")
 
-def processPhotoFiles():
-    #for:
-    #selectFiles()
-    #run through all jpegs automatically and create a new photofile for each 
-    #createPhotoFile()
-    #save them to a list return list
-    return 0
+    return configFile
 
-def addNewLocations(photoList):
+def saveConfigFile(configFile, folders):
+    configFile.write(folders)
+
+def processPhotoFiles(directory):
+    allJpegs = glob(directory + "*.jpg")
+    photoFiles = []
+
+    for photo in allJpegs:
+        photoFiles.append(createPhotoFile(photo))
+    return photoFiles
+
+def createPhotoFile(fileURL):
+    newPhotoFile = photo(fileURL)
+    return newPhotoFile
+
+def getAllCountries(photoList):
     #run through photos adding any new locations to sort list
-    return 
+    countries = []
+    for photo in photoList:
+        countries.append(photo.getCountry())
+    return countries
+
+def getAllCities(photoList):
+    cities = []
+    for photo in photoList:
+        cities.append(photo.getCity())
+    return cities
 
 def organiseFiles(photoList, locationList):
     #sort which folder the files need to move to and use moveFile()
+    #create folder
+
+
     return 0 
 
 def selectFile():
     #select next file and return it
-    return 0
-
-def createPhotoFile(file):
-    newPhotoFile = 'file'
     return 0
 
 def createFolders():
@@ -129,8 +164,7 @@ def moveFiles(file, targetLocation):
 #os.mkdir('a folder') #creates new folder
 
 def main():
-    pic = photo('file', 'File')
-    print(pic.getCity())
+    return 0 
 
 if __name__ == "__main__":
     main()
