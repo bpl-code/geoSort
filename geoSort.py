@@ -13,10 +13,10 @@ class session():
         self.directory = directory
         self.folders = folders
 
-    def getDirectory():
+    def getDirectory(self):
         return self.directory
 
-    def setDirectory(newDirectory):
+    def setDirectory(self, newDirectory):
         self.directory = newDirectory
 
 
@@ -37,9 +37,10 @@ class photo():
         self.fullAddress = self.findFullAddress()
         self.city = self.findCity()
         self.country = self.findCountry()
+        self.date = self.findDate()
 
     def findLatitudeAndLongitude(self):
-        gpsData = gpsphoto.getGPSData(self.photoURL) #needs to be replaced with photoFile
+        gpsData = gpsphoto.getGPSData(self.photoURL) 
         latitude = str(gpsData["Latitude"])
         longitude = str(gpsData['Longitude'])
         coordinates = latitude + "," + longitude
@@ -58,8 +59,13 @@ class photo():
         country = self.rawAddress['address']['country']
         return country
 
-    def getFileURL(self):
-        return self.fileURL
+    def findDate(self):
+        gpsData = gpsphoto.getGPSData(self.photoURL) 
+        date = gpsData['Date']
+        return date
+
+    def getPhotoURL(self):
+        return self.photoURL
 
     def getCoordinates(self):
         return self.coordinates
@@ -78,6 +84,9 @@ class photo():
     
     def getCountry(self):
         return self.country
+
+    def getDate(self):
+        return self.date
 
 
 
@@ -103,7 +112,7 @@ def chooseDirectory(userInput, session):
     session.setDirectory(userInput)
     
 
-def loadConfigFile():
+def openConfigFile():
     try: 
         configFile = open(".configFile.txt", 'x')
 
@@ -112,6 +121,12 @@ def loadConfigFile():
         configFile = open(".configFile.txt", "w+")
 
     return configFile
+
+def loadConfigFile(configFile):
+    folderList = configFile.readLine()
+    namingConvesion = configFile.readline()
+    
+
 
 def saveConfigFile(configFile, folders):
     configFile.write(folders)
@@ -141,25 +156,44 @@ def getAllCities(photoList):
         cities.append(photo.getCity())
     return cities
 
-def organiseFiles(photoList, locationList):
-    #sort which folder the files need to move to and use moveFile()
-    #create folder
+
+def updateFolderStructure(photoList, session):
+    #create a three tire structure
+    countryFolders = set()
+    cityFolders = set()
+    dateFolders = set()
+    for photo in photoList:
+        first = session.getDirectory() + photo.getCountry()
+        second = first + '/' + photo.getCity()
+        third = second + '/' + photo.getDate()
+        countryFolders.add(first)
+        cityFolders.add(second)
+        dateFolders.add(third)
+    return countryFolders, cityFolders, dateFolders
 
 
+
+def createCCDFolderStructure(photoList, currentStructure):
+    #Create Country City Date folder structure
+    #use a list of city
     return 0 
 
-def selectFile():
-    #select next file and return it
-    return 0
+def createNewFolders(locationList):
+    locationList = locationList
+    for location in locationList:
+        try:
+            createFolder(location)
+        except FileExistsError: 
+            pass
 
-def createFolders():
-    #create new folder from sort list 
-    #save new folder to config file
-    return 0 
+def createFolder(folderName, directory="./"):
+    os.makedirs(directory + folderName)
 
-def moveFiles(file, targetLocation):
+def moveFiles(photo, targetLocation, directory='./'):
     #move file to new location
-    return
+    photoURL = photo.getPhotoURL()
+    os.rename(directory + photoURL, targetLocation + photoURL)
+
 
 #os.mkdir('a folder') #creates new folder
 
