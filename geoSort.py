@@ -26,7 +26,7 @@ class session():
 
 class photo():
 
-    def __init__ (self, fileURL):
+    def __init__ (self, fileURL, eventName=""):
 
         self.photoURL = fileURL
         self.latitude, self.longitude, self.coordinates = self.findLatitudeAndLongitude()
@@ -38,6 +38,8 @@ class photo():
         self.city = self.findCity()
         self.country = self.findCountry()
         self.date = self.findDate()
+        self.time = self.findTime()
+        self.eventName = eventName
 
     def findLatitudeAndLongitude(self):
         gpsData = gpsphoto.getGPSData(self.photoURL) 
@@ -64,6 +66,11 @@ class photo():
         date = gpsData['Date']
         return date
 
+    def findTime(self):
+        gpsData = gpsphoto.getGPSData(self.photoURL) 
+        time = gpsData['UTC-Time']
+        return time
+
     def getPhotoURL(self):
         return self.photoURL
 
@@ -87,6 +94,12 @@ class photo():
 
     def getDate(self):
         return self.date
+
+    def getTime(self):
+        return self.time
+
+    def getEventName(self):
+        return self.eventName
 
 
 
@@ -112,24 +125,50 @@ def chooseDirectory(userInput, session):
     session.setDirectory(userInput)
     
 
+#open the file with X this will ensure that the file is not already made 
+#if it is made then open the file with R 
+
+#If exsists run the extraction function to get data then close the config file 
+#then open it again as a W+ file 
+
 def openConfigFile():
     try: 
         configFile = open(".configFile.txt", 'x')
+        return configFile, False
 
     except FileExistsError:
 
-        configFile = open(".configFile.txt", "w+")
-
-    return configFile
-
-def loadConfigFile(configFile):
-    folderList = configFile.readLine()
-    namingConvesion = configFile.readline()
-    
+        configFile = open(".configFile.txt", "r")
+        return configFile, True
 
 
-def saveConfigFile(configFile, folders):
-    configFile.write(folders)
+
+def loadConfigFile(configFile, exsitingFile):
+    if exsitingFile:
+        topLayer = configFile.readline()
+        topLayer = topLayer.split()
+        midLayer = configFile.readline()
+        midLayer = midLayer.split()
+        bottomLayer = configFile.readline()
+        bottomLayer = bottomLayer.split()
+        #return into truple
+        configFile.close()
+        return topLayer, midLayer, bottomLayer 
+    else:
+        pass
+
+def writeToConfigFile(folders):
+    configFile = open(".configFile.txt", "w")
+    top = " ".join(folders[0])
+    mid = " ".join(folders[1])
+    bottom = " ".join(folders[2])
+    configFile.write("{}\n{}\n{}\n\n".format(top, mid, bottom))
+    configFile.close()
+
+
+
+
+
 
 def processPhotoFiles(directory):
     allJpegs = glob(directory + "*.jpg")
@@ -157,30 +196,35 @@ def getAllCities(photoList):
     return cities
 
 
-def updateFolderStructure(photoList, session):
+def createFolderStructure(photoList, session, configFile, topConfig=".getCounty()", midConfig=".getCity()", bottomConfig=".getDate()"):
     #create a three tire structure
-    countryFolders = set()
-    cityFolders = set()
-    dateFolders = set()
+    topLayerFolders = set(configFig[0])
+    midLayerFolders = set(configFig[1])
+    bottomLayerFolders = set(configFig[2])
+
+    topConfigFunction = "photo" + topConfig
+    midConfigFunction = "photo" + midConfig
+    bottomConfigFunction = "photo" + bottomConfig
+
     for photo in photoList:
-        first = session.getDirectory() + photo.getCountry()
-        second = first + '/' + photo.getCity()
-        third = second + '/' + photo.getDate()
-        countryFolders.add(first)
-        cityFolders.add(second)
-        dateFolders.add(third)
-    return countryFolders, cityFolders, dateFolders
+        top = session.getDirectory() + photo.getCountry() #replace with exec(topConfigFunction) 
+        mid = first + '/' + photo.getCity() #replace with exec(topConfigFunction)
+        bottom = second + '/' + photo.getDate() #replace with exec(topConfigFunction)
+        topLayerFolders.add(top)
+        midLayerFolders.add(mid)
+        bottomLayerFolders.add(bottom)
+
+    #create the folders here
+    allFolderLayers = topLayerFolders.add(midLayerFolders)
+    allFolderLayers.add(bottomLayerFolders)
+    createNewFolders(allFolderLayers)
+    
+    return topLayerFolders, midLayerFolders, bottomLayerFolders
 
 
-
-def createCCDFolderStructure(photoList, currentStructure):
-    #Create Country City Date folder structure
-    #use a list of city
-    return 0 
-
-def createNewFolders(locationList):
-    locationList = locationList
-    for location in locationList:
+def createNewFolders(folderList):
+    folderList = locationList
+    for folder in folderList:
         try:
             createFolder(location)
         except FileExistsError: 

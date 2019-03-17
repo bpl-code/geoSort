@@ -26,3 +26,14 @@ location.raw['address']
 
 
 worked out how to get only city and country returns and redesigned the photo class to automatically find that info and assign it to self varibles. I have added all the function names needed for finding and retrieving the date e. I've added the code for findLatitudeAndLongitude() and findcity() and findcountry().
+
+
+
+
+config File plan
+
+#open the file with X this will ensure that the file is not already made 
+#if it is made then open the file with R 
+
+#If exsists run the extraction function to get data then close the config file 
+#then open it again as a W+ file 
