@@ -9,18 +9,50 @@ from glob import glob
 
 
 class session():
-    def __init__ (self, directory="./", folders=[]):
+    def __init__ (self, directory="./", folders=[], folderConfig='ccd'):
         self.directory = directory
         self.folders = folders
+        self.topTier = ''
+        self.midTier = ''
+        self.bottomTier = ''
+        self.topFolders, self.midFolders, self.bottomFolders = self.updateFolders()
+        self.folderConfig = folderConfig
 
-    def getDirectory(self):
-        return self.directory
+        if self.folderConfig == "ccd":
+            self.setTiers(".getCountry()", ".getCity()", ".getDate()")
 
     def setDirectory(self, newDirectory):
         self.directory = newDirectory
 
+    def setTopTiers(self, command):
+        self.topTier = command
 
+    def setMidTier(Self, command):
+        self.midTier = command
+    
+    def setBottomTier(self, command):
+        self.bottomTier = command
 
+    def setFolders(self, topFolders, midFolders, bottomFolders):
+        return topFolders, midFolders, bottomFolders
+
+    def getDirectory(self):
+        return self.directory
+
+    def getFolderConfig(self):
+        return self.folderConfig
+
+    def getFolders(self):
+        return self.topFolders, self.midFolders, self.bottomFolders
+
+    def getTopTier(self):
+        return self.topTier
+
+    def getMidTier(self):
+        return self.midTier
+    
+    def getBottomTier(self):
+        return self.bottomTier
 
 
 
@@ -102,17 +134,6 @@ class photo():
         return self.eventName
 
 
-
-#Choose file directory 
-#Choose naming convension (LATER FEATURE FOR DONT ASK)
-#iterate through all files
-#extract data from file
-#create photo object and save geo and date
-
-#find address and add to photo
-
-#create a sort of locations 
-
 def createSession():
     newSession = session()
     return newSession
@@ -124,12 +145,6 @@ def loadSession(loadedDirectory,loadedFolders):
 def chooseDirectory(userInput, session):
     session.setDirectory(userInput)
     
-
-#open the file with X this will ensure that the file is not already made 
-#if it is made then open the file with R 
-
-#If exsists run the extraction function to get data then close the config file 
-#then open it again as a W+ file 
 
 def openConfigFile():
     try: 
