@@ -12,11 +12,17 @@ class session():
     def __init__ (self, directory="./", folders=[], folderConfig='ccd'):
         self.directory = directory
         self.folders = folders
+
         self.topTier = ''
         self.midTier = ''
         self.bottomTier = ''
-        self.topFolders, self.midFolders, self.bottomFolders = self.updateFolders()
+
+        self.topFolders = [] 
+        self.midFolders = [] 
+        self.bottomFolders = [] 
+
         self.folderConfig = folderConfig
+        self.sessionPhotos = []
 
         if self.folderConfig == "ccd":
             self.setTiers(".getCountry()", ".getCity()", ".getDate()")
@@ -27,14 +33,25 @@ class session():
     def setTopTiers(self, command):
         self.topTier = command
 
-    def setMidTier(Self, command):
+    def setMidTier(self, command):
         self.midTier = command
     
     def setBottomTier(self, command):
         self.bottomTier = command
 
+    def setTiers(self, top, mid, bottom):
+        self.setTopTiers(top)
+        self.setMidTier(mid)
+        self.setBottomTier(bottom)
+
     def setFolders(self, topFolders, midFolders, bottomFolders):
-        return topFolders, midFolders, bottomFolders
+        self.topFolders = topFolders
+        self.midFolders = midFolders
+        self.bottomFolders = bottomFolders
+
+
+    def setSessionPhotos(self, photos):
+        self.sessionPhotos = photos
 
     def getDirectory(self):
         return self.directory
@@ -45,6 +62,15 @@ class session():
     def getFolders(self):
         return self.topFolders, self.midFolders, self.bottomFolders
 
+    def getFirstFolders(self):
+        return self.topFolders
+
+    def getSecondFolders(Self):
+        return self.midFolders
+
+    def getThirdFolders(self):
+        return self.bottomFolders
+
     def getTopTier(self):
         return self.topTier
 
@@ -54,6 +80,8 @@ class session():
     def getBottomTier(self):
         return self.bottomTier
 
+    def getSessionPhotos(self):
+        return self.sessionPhotos
 
 
 class photo():
@@ -69,9 +97,11 @@ class photo():
         self.fullAddress = self.findFullAddress()
         self.city = self.findCity()
         self.country = self.findCountry()
+        self.suburb = self.findSuburb()
         self.date = self.findDate()
         self.time = self.findTime()
         self.eventName = eventName
+    
 
     def findLatitudeAndLongitude(self):
         gpsData = gpsphoto.getGPSData(self.photoURL) 
@@ -92,6 +122,11 @@ class photo():
     def findCountry(self):
         country = self.rawAddress['address']['country']
         return country
+
+    def findSuburb(self):
+        gpsData = gpsphoto.getGPSData(self.photoURL)
+        suburb = gpsData['Date'] #change to the correct suburb key
+        return suburb
 
     def findDate(self):
         gpsData = gpsphoto.getGPSData(self.photoURL) 
@@ -124,6 +159,9 @@ class photo():
     def getCountry(self):
         return self.country
 
+    def getSuburb(self):
+        return self.suburb
+
     def getDate(self):
         return self.date
 
@@ -144,95 +182,88 @@ def loadSession(loadedDirectory,loadedFolders):
 
 def chooseDirectory(userInput, session):
     session.setDirectory(userInput)
-    
 
-def openConfigFile():
+def loadConfigFile(directory='./'):
     try: 
-        configFile = open(".configFile.txt", 'x')
-        return configFile, False
-
-    except FileExistsError:
-
-        configFile = open(".configFile.txt", "r")
-        return configFile, True
-
-
-
-def loadConfigFile(configFile, exsitingFile):
-    if exsitingFile:
-        topLayer = configFile.readline()
-        topLayer = topLayer.split()
-        midLayer = configFile.readline()
-        midLayer = midLayer.split()
-        bottomLayer = configFile.readline()
-        bottomLayer = bottomLayer.split()
-        #return into truple
+        print("Config File found! Loading now...")
+        configFile = open(directory + ".configFile.txt", "r")
+        previousSession = configFile.readline()
+        print(previousSession)
+        print("Session loaded.")
+        session = eval(previousSession)
         configFile.close()
-        return topLayer, midLayer, bottomLayer 
-    else:
-        pass
+    except: 
+        print("No configFile exists: New Session created.")
+        session = session()
+    
+    return session
 
-def writeToConfigFile(folders):
-    configFile = open(".configFile.txt", "w")
-    top = " ".join(folders[0])
-    mid = " ".join(folders[1])
-    bottom = " ".join(folders[2])
-    configFile.write("{}\n{}\n{}\n\n".format(top, mid, bottom))
+def writeToConfigFile(session):
+    configFile = open(session.getDirectory + ".configFile.txt", 'w')
+    configFile.write("session(directory='{}', folders={}, folderConfig='{}')".format(session.getDirectory(), session.getFolders(), session.getFolderConfig()))
     configFile.close()
 
-
-
-
-
-
-def processPhotoFiles(directory):
-    allJpegs = glob(directory + "*.jpg")
-    photoFiles = []
-
-    for photo in allJpegs:
-        photoFiles.append(createPhotoFile(photo))
-    return photoFiles
 
 def createPhotoFile(fileURL):
     newPhotoFile = photo(fileURL)
     return newPhotoFile
 
-def getAllCountries(photoList):
-    #run through photos adding any new locations to sort list
-    countries = []
-    for photo in photoList:
-        countries.append(photo.getCountry())
-    return countries
-
-def getAllCities(photoList):
-    cities = []
-    for photo in photoList:
-        cities.append(photo.getCity())
-    return cities
-
-
-def createFolderStructure(photoList, session, configFile, topConfig=".getCounty()", midConfig=".getCity()", bottomConfig=".getDate()"):
-    #create a three tire structure
-    topLayerFolders = set(configFig[0])
-    midLayerFolders = set(configFig[1])
-    bottomLayerFolders = set(configFig[2])
-
-    topConfigFunction = "photo" + topConfig
-    midConfigFunction = "photo" + midConfig
-    bottomConfigFunction = "photo" + bottomConfig
+def getFirstTier(session):
+    photoList = session.getSessionPhotos()
+    topTierConfig = session.getTopTier()
+    topTierFolders = []
 
     for photo in photoList:
-        top = session.getDirectory() + photo.getCountry() #replace with exec(topConfigFunction) 
-        mid = first + '/' + photo.getCity() #replace with exec(topConfigFunction)
-        bottom = second + '/' + photo.getDate() #replace with exec(topConfigFunction)
-        topLayerFolders.add(top)
-        midLayerFolders.add(mid)
-        bottomLayerFolders.add(bottom)
+        topTierGetCommand = "photo" + topTierConfig 
+        topTierFolders.append(eval(topTierGetCommand))
 
-    #create the folders here
-    allFolderLayers = topLayerFolders.add(midLayerFolders)
-    allFolderLayers.add(bottomLayerFolders)
-    createNewFolders(allFolderLayers)
+    return topTierFolders
+
+ def getSecondTier(session):
+    photoList = session.getSessionPhotos()
+    midTierConfig = session.getMidTier()
+    midTierFolders = []
+
+    for photo in photoList:
+        midTierGetCommand = "photo" + midTierConfig 
+        midTierFolders.append(eval(midTierGetCommand))
+        
+    return midTierFolders   
+
+
+def getThirdTier(session):
+    photoList = session.getSessionPhotos()
+    bottomTierConfig = session.getBottomTier()
+    bottomTierFolders = []
+
+    for photo in photoList:
+        bottomTierGetCommand = "photo" + bottomTierConfig 
+        bottomTierFolders.append(eval(bottomTierGetCommand))
+        
+    return bottomTierFolders  
+    
+
+def getFolderTiers(session):
+
+    firstTierFolders = set(session.getFirstFolders())
+    secondTierFolders = set(session.getSecondFolders())
+    thirdTierFolders = set(session.getThirdFolders())
+
+    topConfigFunction = "photo" + session.getTopTier
+    midConfigFunction = "photo" + session.getMidTier
+    bottomConfigFunction = "photo" + session.getBottomTier
+
+    for photo in session.getSessionPhotos():
+        first = session.getDirectory() + eval(topConfigFunction) 
+        second = first + '/' + eval(midConfigFunction) 
+        third = second + '/' + eval(bottomConfigFunction)
+        firstTierFolders.add(first)
+        secondTierFolders.add(second)
+        thirdTierFolders.add(third)
+    
+    session.setFolders(firstTierFolders, secondTierFolders, thirdTierFolders)
+
+    
     
     return topLayerFolders, midLayerFolders, bottomLayerFolders
 
@@ -254,7 +285,36 @@ def moveFiles(photo, targetLocation, directory='./'):
     os.rename(directory + photoURL, targetLocation + photoURL)
 
 
-#os.mkdir('a folder') #creates new folder
+#Main funciton calls
+
+
+def startSession(directory):
+    session = loadConfigFile(directory=directory)
+    return session
+
+def createPhotos(session):
+    photos = []
+    for jpgs in glob(session.getDirectory() + "*.jpg"):
+        photos.append(createPhotoFile(jpgs))
+
+    session.setSessionPhotos(photos)
+
+def createFolders(session):
+
+    firstTier = getFirstTier(session)
+    secondTier = getSecondTier(session)
+    thirdTier = getThirdTier(session)
+
+    for folder in firstTier:
+        createFolder(folder, directory=session.getDirectory())
+    
+    for folder in secondTier:
+
+
+    return 0
+
+        
+
 
 def main():
     return 0 

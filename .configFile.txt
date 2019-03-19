@@ -1,4 +1,1 @@
-% top
-% mid
-% bot
-
+session(directory='./', folders=([], [], []), folderConfig='ccd')
