@@ -309,7 +309,52 @@ def createFolders(session):
         createFolder(folder, directory=session.getDirectory())
     
     for folder in secondTier:
+        createFolder(folder, directory=session.getDirectory())
 
+    for folder in thirdTier:
+        createFolder(folder, directory=session.getDirectory())
+
+
+def accessTiers(session):
+    firstTierFolders = set(session.getFirstFolders())
+    secondTierFolders = set(session.getSecondFolders())
+    thirdTierFolders = set(session.getThirdFolders())
+
+    firstConfigFunction = "photo" + session.getTopTier
+    secondConfigFunction = "photo" + session.getMidTier
+    thirdConfigFunction = "photo" + session.getBottomTier
+
+    return (firstConfigFunction, secondConfigFunction, thirdConfigFunction), (firstTierFolders, secondTierFolders, thirdTierFolders)
+
+
+    
+def organiseFiles(session):
+
+    #checks if the country, city and date all match if so moves the file to that location
+
+    tierCalls, folders = accessTiers(session)
+    firstTierCall, seondTierCall, thirdTierCall = tierCalls
+    firstTierFolders, secondTierFolders, thirdTierFolders = folders
+
+    photos = session.getSessionPhotos()
+    firstTierCall = session.getTopTier()
+    secondTierCall 
+
+    for photo in photos:
+        photoFirstTier = eval(firstTierCall)
+
+        for folder in thirdTierFolders:
+            if photoFirstTier in folder:
+                if photoSecondTier in folder:
+                    if photoThirdTier in folder:
+                        fileName = folder + photo.getTime() #add another photo.get for a more top level address
+                        moveFiles(photo.getPhotoURL, fileName, directory=session.getDirectory)
+
+
+            
+
+
+        
 
     return 0
 
