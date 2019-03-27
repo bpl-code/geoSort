@@ -65,7 +65,7 @@ class session():
     def getFirstFolders(self):
         return self.topFolders
 
-    def getSecondFolders(Self):
+    def getSecondFolders(self):
         return self.midFolders
 
     def getThirdFolders(self):
@@ -131,6 +131,8 @@ class photo():
     def findDate(self):
         gpsData = gpsphoto.getGPSData(self.photoURL) 
         date = gpsData['Date']
+        date = date.split('/')
+        date = '-'.join(date)
         return date
 
     def findTime(self):
@@ -172,34 +174,24 @@ class photo():
         return self.eventName
 
 
-def createSession():
-    newSession = session()
-    return newSession
-
-def loadSession(loadedDirectory,loadedFolders):
-    newSession = session(directory=loadedDirectory, folders=loadedFolders)
-    return newSession
-
-def chooseDirectory(userInput, session):
-    session.setDirectory(userInput)
-
 def loadConfigFile(directory='./'):
     try: 
-        print("Config File found! Loading now...")
         configFile = open(directory + ".configFile.txt", "r")
         previousSession = configFile.readline()
+        print("Config File found! Loading now...")
         print(previousSession)
         print("Session loaded.")
-        session = eval(previousSession)
+        loadedSession = eval(previousSession)
         configFile.close()
+        return loadedSession
     except: 
         print("No configFile exists: New Session created.")
-        session = session()
+        newSession = session(directory=directory)
+        return newSession
     
-    return session
 
 def writeToConfigFile(session):
-    configFile = open(session.getDirectory + ".configFile.txt", 'w')
+    configFile = open(session.getDirectory() + ".configFile.txt", 'w')
     configFile.write("session(directory='{}', folders={}, folderConfig='{}')".format(session.getDirectory(), session.getFolders(), session.getFolderConfig()))
     configFile.close()
 
@@ -207,40 +199,6 @@ def writeToConfigFile(session):
 def createPhotoFile(fileURL):
     newPhotoFile = photo(fileURL)
     return newPhotoFile
-
-def getFirstTier(session):
-    photoList = session.getSessionPhotos()
-    topTierConfig = session.getTopTier()
-    topTierFolders = []
-
-    for photo in photoList:
-        topTierGetCommand = "photo" + topTierConfig 
-        topTierFolders.append(eval(topTierGetCommand))
-
-    return topTierFolders
-
- def getSecondTier(session):
-    photoList = session.getSessionPhotos()
-    midTierConfig = session.getMidTier()
-    midTierFolders = []
-
-    for photo in photoList:
-        midTierGetCommand = "photo" + midTierConfig 
-        midTierFolders.append(eval(midTierGetCommand))
-        
-    return midTierFolders   
-
-
-def getThirdTier(session):
-    photoList = session.getSessionPhotos()
-    bottomTierConfig = session.getBottomTier()
-    bottomTierFolders = []
-
-    for photo in photoList:
-        bottomTierGetCommand = "photo" + bottomTierConfig 
-        bottomTierFolders.append(eval(bottomTierGetCommand))
-        
-    return bottomTierFolders  
     
 
 def getFolderTiers(session):
@@ -249,9 +207,9 @@ def getFolderTiers(session):
     secondTierFolders = set(session.getSecondFolders())
     thirdTierFolders = set(session.getThirdFolders())
 
-    topConfigFunction = "photo" + session.getTopTier
-    midConfigFunction = "photo" + session.getMidTier
-    bottomConfigFunction = "photo" + session.getBottomTier
+    topConfigFunction = "photo" + session.getTopTier()
+    midConfigFunction = "photo" + session.getMidTier()
+    bottomConfigFunction = "photo" + session.getBottomTier()
 
     for photo in session.getSessionPhotos():
         first = session.getDirectory() + eval(topConfigFunction) 
@@ -262,10 +220,6 @@ def getFolderTiers(session):
         thirdTierFolders.add(third)
     
     session.setFolders(firstTierFolders, secondTierFolders, thirdTierFolders)
-
-    
-    
-    return topLayerFolders, midLayerFolders, bottomLayerFolders
 
 
 def createNewFolders(folderList):
@@ -279,10 +233,10 @@ def createNewFolders(folderList):
 def createFolder(folderName, directory="./"):
     os.makedirs(directory + folderName)
 
-def moveFiles(photo, targetLocation, directory='./'):
+def moveFiles(photo, targetLocation):
     #move file to new location
-    photoURL = photo.getPhotoURL()
-    os.rename(directory + photoURL, targetLocation + photoURL)
+    photoURL = photo
+    os.rename(photo, targetLocation)
 
 
 #Main funciton calls
@@ -301,18 +255,30 @@ def createPhotos(session):
 
 def createFolders(session):
 
-    firstTier = getFirstTier(session)
-    secondTier = getSecondTier(session)
-    thirdTier = getThirdTier(session)
+    getFolderTiers(session)
+
+    firstTier, secondTier, thirdTier = session.getFolders()
 
     for folder in firstTier:
-        createFolder(folder, directory=session.getDirectory())
+        try:
+            createFolder(folder, directory=session.getDirectory())
+
+        except FileExistsError:
+            pass
     
     for folder in secondTier:
-        createFolder(folder, directory=session.getDirectory())
+        try:
+            createFolder(folder, directory=session.getDirectory())
+
+        except FileExistsError:
+            pass
 
     for folder in thirdTier:
-        createFolder(folder, directory=session.getDirectory())
+        try:
+            createFolder(folder, directory=session.getDirectory())
+
+        except FileExistsError:
+            pass
 
 
 def accessTiers(session):
@@ -320,9 +286,9 @@ def accessTiers(session):
     secondTierFolders = set(session.getSecondFolders())
     thirdTierFolders = set(session.getThirdFolders())
 
-    firstConfigFunction = "photo" + session.getTopTier
-    secondConfigFunction = "photo" + session.getMidTier
-    thirdConfigFunction = "photo" + session.getBottomTier
+    firstConfigFunction = "photo" + session.getTopTier()
+    secondConfigFunction = "photo" + session.getMidTier()
+    thirdConfigFunction = "photo" + session.getBottomTier()
 
     return (firstConfigFunction, secondConfigFunction, thirdConfigFunction), (firstTierFolders, secondTierFolders, thirdTierFolders)
 
@@ -334,29 +300,22 @@ def organiseFiles(session):
 
     tierCalls, folders = accessTiers(session)
     firstTierCall, seondTierCall, thirdTierCall = tierCalls
-    firstTierFolders, secondTierFolders, thirdTierFolders = folders
+    thirdTierFolders = folders[2]
 
     photos = session.getSessionPhotos()
-    firstTierCall = session.getTopTier()
-    secondTierCall 
 
     for photo in photos:
         photoFirstTier = eval(firstTierCall)
+        photoSecondTier = eval(seondTierCall)
+        photoThirdTier = eval(thirdTierCall)
 
         for folder in thirdTierFolders:
             if photoFirstTier in folder:
                 if photoSecondTier in folder:
                     if photoThirdTier in folder:
-                        fileName = folder + photo.getTime() #add another photo.get for a more top level address
-                        moveFiles(photo.getPhotoURL, fileName, directory=session.getDirectory)
-
-
-            
-
-
+                        fileName = folder + '/' + photo.getTime() + '.jpg' #add another photo.get for a more top level address
+                        moveFiles(photo.getPhotoURL(), fileName)
         
-
-    return 0
 
         
 
